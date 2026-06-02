@@ -1,0 +1,9 @@
+# Quem pode aprovar ações L2 do agente.
+# Comparado com o `author` de comentários do Bloquim.
+# Sintaxe de aprovação: [APROVADO], aprovado, [NEGADO], negado, [CANCELAR], cancelar
+# Detalhes em SPEC §11.4.
+
+approvers:
+  - email: gustavo.azvd@gmail.com
+    can_approve: [L2]
+    is_owner: true

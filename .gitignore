@@ -1,0 +1,25 @@
+# Secrets — env vars vivem no Coolify, não no Git
+secrets/*
+!secrets/.gitkeep
+!secrets/.env.example
+.env
+.env.local
+
+# Estado runtime — gerado pelo container, persistido em volume Coolify
+.locks/
+.logs/
+.cost/
+.last-tick
+_platform/approval-cache.json
+
+# Build artifacts
+node_modules/
+dist/
+
+# Claude Code local settings
+**/.claude/settings.local.json
+
+# Editor
+.vscode/
+.idea/
+*.swp

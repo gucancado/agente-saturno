@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "model": "claude-sonnet-4-6",
+  "permissions": {
+    "allow": [
+      "Bash(git status:*)",
+      "Bash(git diff:*)",
+      "Bash(git log:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)",
+      "Bash(date:*)",
+      "Bash(jq:*)",
+      "Bash(yq:*)",
+      "Bash(cat:*)",
+      "Bash(ls:*)",
+      "Bash(mkdir:*)",
+      "Read(/workspace/**)",
+      "Write(/workspace/projetos/**/memoria/**)",
+      "Edit(/workspace/projetos/**/memoria/**)",
+      "Write(/workspace/projetos/**/entregaveis/**)",
+      "Edit(/workspace/projetos/**/entregaveis/**)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(sudo:*)",
+      "Write(/workspace/_platform/**)",
+      "Write(/workspace/_base/policies/**)",
+      "Write(/workspace/scripts/**)",
+      "Write(/workspace/docker/**)",
+      "Write(/workspace/.github/**)",
+      "Edit(/workspace/_platform/**)",
+      "Edit(/workspace/_base/policies/**)",
+      "Edit(/workspace/scripts/**)",
+      "Edit(/workspace/docker/**)",
+      "Edit(/workspace/.github/**)"
+    ]
+  }
+}

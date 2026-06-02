@@ -1,0 +1,14 @@
+# Garante LF em arquivos que rodam em Linux (container Coolify)
+* text=auto eol=lf
+
+*.sh   text eol=lf
+*.yml  text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.md   text eol=lf
+Dockerfile text eol=lf
+
+# Binários (não tocar)
+*.png binary
+*.jpg binary
+*.pdf binary

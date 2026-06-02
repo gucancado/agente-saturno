@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "workspaces": [
+    {
+      "id": "REPLACE_WITH_WORKSPACE_ID_SISTEMA",
+      "name": "Sistema",
+      "slug": "_sistema"
+    }
+  ]
+}

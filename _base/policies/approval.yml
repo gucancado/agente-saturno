@@ -1,0 +1,70 @@
+# Política de aprovação — classifica ações do agente em níveis L0/L1/L2.
+# Consultada pela skill `aprovacao-humana` antes de qualquer ação externa.
+# Detalhes em SPEC §11.4.
+
+default_level: L2   # ação sem regra casando = L2 (mais restritivo)
+
+rules:
+  # WhatsApp
+  - action: whatsapp.send
+    when: { to_contact: known, mode: reply }
+    level: L1
+  - action: whatsapp.send
+    when: { to_contact: known, mode: new_thread, template_match: true }
+    level: L1
+  - action: whatsapp.send
+    when: { to_contact: unknown }
+    level: L2
+
+  # Email
+  - action: email.send
+    when: { thread: existing }
+    level: L1
+  - action: email.send
+    when: { thread: new, to_contact: unknown }
+    level: L2
+
+  # Bloquim
+  - action: bloquim.create_task
+    level: L0
+  - action: bloquim.update_task
+    level: L0
+  - action: bloquim.set_status
+    level: L0
+  - action: bloquim.add_comment
+    level: L0
+  - action: bloquim.move_task
+    level: L0
+  - action: bloquim.delete_task
+    level: L2
+
+  # Memória / vault
+  - action: memoria.write
+    level: L0
+
+  # Calendar
+  - action: calendar.create_event
+    when: { attendees: internal_only }
+    level: L0
+  - action: calendar.create_event
+    when: { attendees: includes_external }
+    level: L2
+  - action: calendar.update_event
+    when: { attendees: includes_external }
+    level: L2
+
+  # Ads (Meta, Google)
+  - action: meta_ads.budget_change
+    level: L2
+  - action: meta_ads.pause_entity
+    level: L2
+  - action: meta_ads.activate_entity
+    level: L2
+  - action: meta_ads.create_campaign
+    level: L2
+
+  # Dados sensíveis
+  - action: customer_data.delete
+    level: L2
+  - action: customer_data.export
+    level: L2

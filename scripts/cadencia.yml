@@ -1,0 +1,68 @@
+# Cadência do agente.
+# Cada perfil ativo gera entries no crontab do container (gerados pelo entrypoint).
+# Documentação em SPEC §2.3 e §4.2 da plataforma Semente.
+
+profiles:
+  responsive:
+    enabled: true
+    crons:
+      - "*/5 9-19 * * 1-5"           # comercial: 5min
+      - "*/30 0-8,20-23 * * 1-5"     # off-hours dias úteis
+      - "*/30 * * * 0,6"             # fim de semana
+    timezone: America/Sao_Paulo
+    rotina: null
+    list_filter:
+      status: [pending, in_progress]
+    max_turns_per_workspace: 50
+
+  daily:
+    enabled: true
+    crons:
+      - "0 8 * * 1-5"                # 08:00 dias úteis
+    timezone: America/Sao_Paulo
+    rotina: rotina-matinal.md
+    list_filter:
+      status: [pending, in_progress]
+      scope: today
+    max_turns_per_workspace: 80
+
+  urgent_only:
+    enabled: false
+    crons:
+      - "*/15 * * * *"
+    timezone: America/Sao_Paulo
+    rotina: null
+    list_filter:
+      status: [pending]
+      scheduleMode: urgente
+    max_turns_per_workspace: 30
+
+  batch:
+    enabled: false
+    crons:
+      - "0 */2 * * *"
+    timezone: America/Sao_Paulo
+    rotina: null
+    list_filter:
+      status: [pending, in_progress]
+    max_turns_per_workspace: 80
+
+  # Modo sweep (project-driven) — usado pelo agente auditor (saturno).
+  # Diferente dos perfis acima: work-list = projetos (workspace-map.json), nao fila Bloquim.
+  # Roda via tick-sweep.sh (campo runner). Desligado no template/mercurio; saturno liga.
+  sweep:
+    enabled: false
+    runner: tick-sweep.sh
+    crons:
+      - "*/10 * * * *"             # a cada 10 min
+    timezone: America/Sao_Paulo
+    model: claude-sonnet-4-6
+    max_turns_per_workspace: 40
+
+# Guardrails de custo. Soft cap — degradação graciosa antes do hard cap do Anthropic.
+# Atendente típico: ~$1.80/dia. Cap 2.7x = $5.00.
+# Calibrar por agente (atendente vs batch têm perfis diferentes — ver SPEC §17.4).
+guardrails:
+  cost_cap_usd_per_day: 5.00
+  cost_cap_usd_per_tick: 0.50
+  alert_threshold_pct: 80
