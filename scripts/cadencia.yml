@@ -4,7 +4,7 @@
 
 profiles:
   responsive:
-    enabled: true
+    enabled: false                   # saturno é sweep-only; modo task-driven desligado
     crons:
       - "*/5 9-19 * * 1-5"           # comercial: 5min
       - "*/30 0-8,20-23 * * 1-5"     # off-hours dias úteis
@@ -16,7 +16,7 @@ profiles:
     max_turns_per_workspace: 50
 
   daily:
-    enabled: true
+    enabled: false                   # saturno é sweep-only
     crons:
       - "0 8 * * 1-5"                # 08:00 dias úteis
     timezone: America/Sao_Paulo
@@ -51,7 +51,7 @@ profiles:
   # Diferente dos perfis acima: work-list = projetos (workspace-map.json), nao fila Bloquim.
   # Roda via tick-sweep.sh (campo runner). Desligado no template/mercurio; saturno liga.
   sweep:
-    enabled: false
+    enabled: true                    # perfil ativo do saturno (auditor)
     runner: tick-sweep.sh
     crons:
       - "*/10 * * * *"             # a cada 10 min

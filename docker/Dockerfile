@@ -4,7 +4,7 @@
 FROM ghcr.io/gucancado/agente-base:latest
 
 # Metadados do agente (definidos via build args pelo Coolify)
-ARG AGENT_NAME=unknown
+ARG AGENT_NAME=saturno
 ENV AGENT_NAME=${AGENT_NAME}
 
 # Copia repo do agente para /workspace dentro da imagem.
