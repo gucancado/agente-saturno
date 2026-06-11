@@ -20,10 +20,15 @@ require() {
   fi
 }
 
-# Bloquim MCP — fila de tarefas
-if require BLOQUIM_TOKEN; then
+# Bloquim MCP — fila de tarefas. No modo stdio o bloquim-mcp MINTA o JWT
+# internamente a partir de JWT_SECRET + BLOQUIM_USER_ID/EMAIL (não usa um token
+# pronto). Chama a API em BLOQUIM_API_BASE_URL.
+if require JWT_SECRET && require BLOQUIM_USER_ID && require BLOQUIM_USER_EMAIL && require BLOQUIM_API_BASE_URL; then
   claude mcp add -s user bloquim \
-    -e "BLOQUIM_TOKEN=${BLOQUIM_TOKEN}" \
+    -e "JWT_SECRET=${JWT_SECRET}" \
+    -e "BLOQUIM_USER_ID=${BLOQUIM_USER_ID}" \
+    -e "BLOQUIM_USER_EMAIL=${BLOQUIM_USER_EMAIL}" \
+    -e "BLOQUIM_API_BASE_URL=${BLOQUIM_API_BASE_URL}" \
     -- npx -y bloquim-mcp
 fi
 
