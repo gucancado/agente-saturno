@@ -10,6 +10,11 @@ set -euo pipefail
 
 log() { echo "[entrypoint $(date -u +%FT%TZ)] $*"; }
 
+# Diagnóstico/resiliência: se qualquer passo falhar (set -e), loga a linha e
+# mantém o container vivo (tail -f) em vez de crash-loop cego — assim os logs
+# do Coolify ficam inspecionáveis. Remover o tail quando o boot estabilizar.
+trap 'rc=$?; echo "[entrypoint ERRO] rc=$rc na linha ${LINENO} — mantendo container vivo p/ diagnóstico"; exec tail -f /dev/null' ERR
+
 WORKSPACE=/workspace
 HOME_DIR="${HOME:-/home/agent}"
 CLAUDE_HOME="${HOME_DIR}/.claude"
