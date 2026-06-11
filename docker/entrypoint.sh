@@ -52,7 +52,11 @@ for PROFILE in $PROFILES; do
   CRONS=$(yq -r ".profiles.$PROFILE.crons[]" "$WORKSPACE/scripts/cadencia.yml")
   while IFS= read -r CRON_EXPR; do
     [[ -z "$CRON_EXPR" ]] && continue
-    echo "CRON_TZ=$TZ $CRON_EXPR /workspace/scripts/$RUNNER $PROFILE >> /workspace/.logs/supercronic.log 2>&1" \
+    # CRON_TZ tem que ficar em LINHA PRÓPRIA — supercronic não aceita o prefixo
+    # inline na mesma linha do schedule (invalida o crontab e o supercronic sai
+    # imediatamente, causando crash-loop do container).
+    echo "CRON_TZ=$TZ" >> "$CRONTAB"
+    echo "$CRON_EXPR /workspace/scripts/$RUNNER $PROFILE >> /workspace/.logs/supercronic.log 2>&1" \
       >> "$CRONTAB"
   done <<< "$CRONS"
 done
@@ -70,4 +74,11 @@ git config --global pull.rebase true
 
 # ─── 7. Exec supercronic ───────────────────────────────────────────────────
 log "starting supercronic"
-exec supercronic "$CRONTAB"
+# Sem `exec`: se o supercronic sair (ex.: crontab inválido), logamos o código e
+# mantemos o container vivo (tail -f) em vez de crash-loop cego — assim os logs
+# do Coolify ficam inspecionáveis. Em operação normal supercronic bloqueia aqui.
+if ! supercronic "$CRONTAB"; then
+  rc=$?
+  log "ERRO: supercronic saiu (código $rc). Crontab logado acima. Mantendo container vivo p/ diagnóstico."
+  exec tail -f /dev/null
+fi
