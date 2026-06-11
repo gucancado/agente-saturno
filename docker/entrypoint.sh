@@ -40,7 +40,10 @@ if [[ -x "$WORKSPACE/_platform/mcp-bootstrap.sh" ]]; then
 fi
 
 # ─── 4. Gerar crontab a partir de cadencia.yml ─────────────────────────────
-CRONTAB=/etc/crontabs/agent
+# Crontab num path gravável pelo usuário de runtime (agent, não-root). Antes era
+# /etc/crontabs/agent → mkdir falhava com Permission denied. supercronic aceita
+# qualquer path como argumento.
+CRONTAB="${HOME_DIR}/crontab"
 mkdir -p "$(dirname "$CRONTAB")"
 : > "$CRONTAB"
 
