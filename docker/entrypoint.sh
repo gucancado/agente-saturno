@@ -50,9 +50,11 @@ mkdir -p "$(dirname "$CRONTAB")"
 # Para cada perfil habilitado, emite uma linha por entry de cron.
 PROFILES=$(yq -r '.profiles | keys | .[]' "$WORKSPACE/scripts/cadencia.yml")
 for PROFILE in $PROFILES; do
-  ENABLED=$(yq -r ".profiles.$PROFILE.enabled // true" "$WORKSPACE/scripts/cadencia.yml")
+  # NÃO usar `// true`: o operador `//` do yq trata `false` como vazio e devolve
+  # `true`, fazendo TODO profile parecer habilitado. Lê o valor cru e exige "true".
+  ENABLED=$(yq -r ".profiles.$PROFILE.enabled" "$WORKSPACE/scripts/cadencia.yml")
   if [[ "$ENABLED" != "true" ]]; then
-    log "perfil $PROFILE desabilitado"
+    log "perfil $PROFILE desabilitado (enabled=$ENABLED)"
     continue
   fi
   TZ=$(yq -r ".profiles.$PROFILE.timezone // \"UTC\"" "$WORKSPACE/scripts/cadencia.yml")

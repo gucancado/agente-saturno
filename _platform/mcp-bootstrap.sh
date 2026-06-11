@@ -4,10 +4,12 @@
 #
 # Tokens vêm de env vars do Coolify (BLOQUIM_TOKEN, WORKER_TOKEN, etc.).
 #
-# Sintaxe `claude mcp add` (versão atual): opções (--scope/--transport/--env/--header)
-# vêm ANTES do nome; nome e (url | -- comando) são POSICIONAIS.
-#   http : claude mcp add --transport http  --header "H: V"  <nome> <url>
-#   stdio: claude mcp add --transport stdio --env "K=V"      <nome> -- <cmd> <args>
+# Sintaxe `claude mcp add [options] <name> <commandOrUrl> [args...]`.
+# IMPORTANTE: `-e/--env` e `-H/--header` são VARIÁDICOS — se vierem ANTES do
+# nome, engolem o <name>/<url> ("missing required argument 'name'"). Por isso
+# nome e url vêm PRIMEIRO; --header vem por último; -e vem antes do `--`.
+#   http : claude mcp add -s user -t http  <nome> <url> --header "H: V"
+#   stdio: claude mcp add -s user <nome> -e "K=V" -- <cmd> <args>
 set -euo pipefail
 
 require() {
@@ -20,32 +22,32 @@ require() {
 
 # Bloquim MCP — fila de tarefas
 if require BLOQUIM_TOKEN; then
-  claude mcp add --scope user --transport stdio \
-    --env "BLOQUIM_TOKEN=${BLOQUIM_TOKEN}" \
-    bloquim -- npx -y bloquim-mcp
+  claude mcp add -s user bloquim \
+    -e "BLOQUIM_TOKEN=${BLOQUIM_TOKEN}" \
+    -- npx -y bloquim-mcp
 fi
 
 # Semente Platform Worker MCP — contact routes + plataforma (inbox)
 if require WORKER_TOKEN && require WORKER_URL; then
-  claude mcp add --scope user --transport http \
-    --header "X-Agent-Token: ${WORKER_TOKEN}" \
-    platform "${WORKER_URL}/mcp"
+  claude mcp add -s user -t http \
+    platform "${WORKER_URL}/mcp" \
+    --header "X-Agent-Token: ${WORKER_TOKEN}"
 fi
 
 # Evolution WhatsApp MCP — envio de mensagens
 if require EVOLUTION_API_URL && require EVOLUTION_API_KEY && require EVOLUTION_INSTANCE; then
-  claude mcp add --scope user --transport stdio \
-    --env "EVOLUTION_API_URL=${EVOLUTION_API_URL}" \
-    --env "EVOLUTION_API_KEY=${EVOLUTION_API_KEY}" \
-    --env "EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE}" \
-    whatsapp -- npx -y @aiteks-ltda/mcp-evolution-whatsapp-api
+  claude mcp add -s user whatsapp \
+    -e "EVOLUTION_API_URL=${EVOLUTION_API_URL}" \
+    -e "EVOLUTION_API_KEY=${EVOLUTION_API_KEY}" \
+    -e "EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE}" \
+    -- npx -y @aiteks-ltda/mcp-evolution-whatsapp-api
 fi
 
 # GitHub MCP — opcional, agentes que tocam repos
 if require GITHUB_TOKEN; then
-  claude mcp add --scope user --transport stdio \
-    --env "GITHUB_TOKEN=${GITHUB_TOKEN}" \
-    github -- npx -y @modelcontextprotocol/server-github
+  claude mcp add -s user github \
+    -e "GITHUB_TOKEN=${GITHUB_TOKEN}" \
+    -- npx -y @modelcontextprotocol/server-github
 fi
 
 # Google MCPs (Gmail, Drive, Calendar) — agentes que precisam
