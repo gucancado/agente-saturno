@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "comment": "Saturno usa UMA instância Evolution (`saturno`, um número) em TODOS os grupos. O roteamento é por GRUPO → projeto: cada projeto tem seu `whatsapp_group_jid`. O sweep itera os slugs (exceto `_`-prefixados) e filtra a inbox pelo JID do grupo do projeto.",
+  "comment": "Saturno usa UMA instância Evolution (`saturno`, um número) em TODOS os grupos. O roteamento é por GRUPO → projeto: cada projeto tem seu `whatsapp_group_jid` (forma canônica `<id>@g.us`). NOTA: no inbox do worker o mesmo grupo aparece como identifier `+<id>` (sem @g.us, com +) — Fase 2 normaliza ao filtrar. O sweep itera os slugs (exceto `_`-prefixados) e filtra a inbox pelo JID do grupo do projeto.",
   "workspaces": [
     {
       "name": "Sistema",
@@ -9,7 +9,7 @@
     {
       "name": "Clubinho da História",
       "slug": "clubinho-da-historia",
-      "whatsapp_group_jid": null,
+      "whatsapp_group_jid": "120363308683104573@g.us",
       "bloquim_workspace_id": "e21deb6f-ef7e-4cd5-a40f-fa503859d8a6"
     }
   ]
