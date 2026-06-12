@@ -116,6 +116,11 @@ for SLUG in $SLUGS; do
   PROCESSED=$((PROCESSED+1))
   log "projeto $SLUG cost=\$$TICK_COST"
 
+  # Avanca o cursor do gate has-changes.sh: marca que este projeto foi varrido
+  # ate agora. Proximos ticks so reprocessam se chegar mensagem mais nova.
+  mkdir -p "$CWD/memoria" 2>/dev/null || true
+  date -u +%FT%TZ > "$CWD/memoria/.sweep-cursor" 2>/dev/null || true
+
   # cap por tick → para o sweep. Nota: compara o ACUMULADO do sweep (TOTAL_COST),
   # nao o custo de um projeto isolado — limite de gasto por invocacao do sweep.
   OVER_TICK=$(awk -v c="$TOTAL_COST" -v cap="$COST_CAP_TICK" 'BEGIN { print (c >= cap) ? 1 : 0 }')
