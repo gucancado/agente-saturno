@@ -32,7 +32,19 @@ Passa por `aprovacao-humana` (classifica `bloquim.create_task` = L0 → executa 
 
 ## Dedup (ledger)
 
-Chave: `(grupo, "promessa", sha1(autor + objeto_normalizado))`. Não recriar tarefa pra promessa já registrada. Registrar no ledger após criar.
+Ledger JSONL por projeto: `projetos/<slug>/memoria/_ledger.jsonl` (ver `scripts/lib/ledger.sh`). Chave: `sha1(autor + objeto_normalizado)`, regra `promessa`.
+
+**Antes de criar a tarefa**, checar (vazio = nova):
+```
+jq -c --arg r "promessa" --arg k "<sha1>" 'select(.rule==$r and .key==$k)' \
+  projetos/<slug>/memoria/_ledger.jsonl 2>/dev/null | head -1
+```
+**Depois de criar**, registrar:
+```
+jq -nc --arg ts "<iso>" --arg r "promessa" --arg k "<sha1>" --argjson m '{"task_id":"<id>"}' \
+  '{ts:$ts,rule:$r,key:$k,meta:$m}' >> projetos/<slug>/memoria/_ledger.jsonl
+```
+O ledger é commitado junto da memória no fim do tick (persiste entre ticks).
 
 ## Fonte
 
