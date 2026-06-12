@@ -39,14 +39,11 @@ if require WORKER_TOKEN && require WORKER_URL; then
     --header "X-Agent-Token: ${WORKER_TOKEN}"
 fi
 
-# Evolution WhatsApp MCP — envio de mensagens
-if require EVOLUTION_API_URL && require EVOLUTION_API_KEY && require EVOLUTION_INSTANCE; then
-  claude mcp add -s user whatsapp \
-    -e "EVOLUTION_API_URL=${EVOLUTION_API_URL}" \
-    -e "EVOLUTION_API_KEY=${EVOLUTION_API_KEY}" \
-    -e "EVOLUTION_INSTANCE=${EVOLUTION_INSTANCE}" \
-    -- npx -y @aiteks-ltda/mcp-evolution-whatsapp-api
-fi
+# Evolution WhatsApp MCP — DESABILITADO DE PROPÓSITO no saturno.
+# Saturno é AUDITOR: lê grupos via worker (platform MCP / inbox), e a ÚNICA
+# saída é o número B (Cloud API, via worker /send-cloud) pra indivíduos. Não
+# registrar o MCP Evolution garante por ARQUITETURA que o saturno nunca posta
+# num grupo de cliente (número A é read-only). NÃO reabilitar sem revisão.
 
 # GitHub MCP — opcional, agentes que tocam repos
 if require GITHUB_TOKEN; then
