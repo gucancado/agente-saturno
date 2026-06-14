@@ -51,14 +51,24 @@ si e podem ir em paralelo; ambos antes do teste de C.
 
 ### 3.1 Fase A — destravar PR #14
 
-CI `build-and-test` do PR #14 está **vermelho por lockfile**, não pelo código (só toca 2 rotas
-`.ts`):
+CI `build-and-test` do PR #14 está **vermelho**, não pelo código (só toca 2 rotas `.ts`):
 ```
-ERR_PNPM_LOCKFILE_CONFIG_MISMATCH — "overrides" do pnpm-workspace.yaml ≠ pnpm-lock.yaml
+ERR_PNPM_LOCKFILE_CONFIG_MISMATCH — "overrides" não bate com o lockfile
 ```
-`--frozen-lockfile` aborta. **O deploy do Coolify usa `--frozen-lockfile`** → mesmo erro no
-deploy após merge. Fix: na branch `feat/internal-resolve-by-whatsapp`,
-`pnpm install --no-frozen-lockfile`, commitar `pnpm-lock.yaml`, CI verde, merge, deploy.
+**Root cause real (investigado): discrepância de versão do pnpm**, não drift do lockfile.
+- Lockfile foi gerado por **pnpm 11**; o deploy (`deploy/api-server/Dockerfile`) usa
+  `corepack prepare pnpm@11.4.0` → **o deploy NÃO está quebrado** (frozen-11 passa).
+- Só o **CI** (`.github/workflows/ci.yml`) usava `pnpm/action-setup` **9.15.9**. O pnpm 9 lê
+  `pnpm.overrides` do `package.json` (4 pins de segurança: react/react-dom/path-to-regexp/lodash)
+  que o pnpm 11 **ignora** → config diverge do lockfile → mismatch só no CI.
+
+**Fix aplicado (zero-risco): bump do CI `9.15.9 → 11.4.0`** (alinha CI ao Dockerfile + gerador
+do lockfile). **NÃO** regenerar o lockfile — regenerar com pnpm 9 removia a seção `overrides:`
+inteira (incl. pins `*-linux-x64-musl: '-'`) e reativava o bug-trap musl do mindtask-app.
+Verificado: `frozen` fresh com 11.4.0 passa (exit 0). Commit `ci: bump pnpm` na branch do PR.
+> ⚠️ Gap pré-existente (fora do escopo R1): os 4 pins de `pnpm.overrides` em `package.json` são
+> ignorados pelo pnpm 11 → não aplicados no deploy atual. Pra reativar, mover p/ `pnpm-workspace.yaml`
+> `overrides:` + regen com pnpm 11. Anotado p/ depois (toca o lockfile; fora do R1).
 
 Endpoint (confirmado no diff do PR): `GET /api/internal/resolve-by-whatsapp?phone=<digitos>`,
 header `X-Internal-Secret`. `200`:

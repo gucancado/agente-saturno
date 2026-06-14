@@ -16,61 +16,18 @@
 
 ## Fase A — Destravar e mergear PR #14 (repo `beeads-bloquim`)
 
-> Repo local: `c:\Users\gusta\Projetos\beeads-bloquim\repo`. Branch do PR: `feat/internal-resolve-by-whatsapp`. **Não TDD** — ops de lockfile + merge + deploy + smoke. Não tocar nas rotas (já revisadas no PR). **A e B são independentes** (código/deploy); só o *runtime* de B depende de A (a tool retorna `null` graceful enquanto A não sobe). Podem ir em paralelo.
+> **Não TDD** — ops de CI-fix + merge + deploy + smoke. Não tocar nas rotas (já revisadas no PR). **A e B são independentes** (código/deploy); só o *runtime* de B depende de A (a tool retorna `null` graceful enquanto A não sobe). **Trabalhar em worktree isolado** (`/c/tmp/bloquim-r1` a partir de `origin/feat/internal-resolve-by-whatsapp`) p/ não perturbar a branch/WIP local do usuário.
 
-### Task A1: Regenerar lockfile na branch do PR
+### Task A1: Corrigir o CI (versão do pnpm) — ✅ EXECUTADO
 
-**Files:** Modify: `pnpm-lock.yaml` (raiz, regenerado).
+> Root cause NÃO era drift de lockfile. Era versão do pnpm: lock gerado por pnpm 11 (deploy usa `corepack prepare pnpm@11.4.0`), mas o CI usava `pnpm/action-setup` 9.15.9. pnpm 9 lê `pnpm.overrides` do package.json (ignorado pelo 11) → diverge do lock → mismatch só no CI. **Regenerar o lock com pnpm 9 é proibido** (remove a seção `overrides:` inteira, incl. pins `*-musl: '-'` → reativa o bug-trap musl).
 
-- [ ] **Step 1: Buscar a branch do PR (sem perder WIP do usuário)**
-
-```bash
-cd /c/Users/gusta/Projetos/beeads-bloquim/repo
-git stash list
-git fetch origin feat/internal-resolve-by-whatsapp
-git checkout feat/internal-resolve-by-whatsapp
-git pull --ff-only origin feat/internal-resolve-by-whatsapp
-```
-Expected: HEAD na branch do PR, tree limpo.
-
-- [ ] **Step 2: Reproduzir a falha**
-
-```bash
-pnpm install --frozen-lockfile
-```
-Expected: FALHA `ERR_PNPM_LOCKFILE_CONFIG_MISMATCH ... "overrides" ... doesn't match`.
-
-- [ ] **Step 3: Regenerar o lockfile**
-
-```bash
-pnpm install --no-frozen-lockfile
-git diff --stat pnpm-lock.yaml
-```
-Expected: instala e reescreve `pnpm-lock.yaml`.
-
-- [ ] **Step 4: Verificar que o frozen passa (gate idêntico ao CI/Coolify)**
-
-```bash
-pnpm install --frozen-lockfile
-```
-Expected: "Lockfile is up to date" / passa supply-chain — sem erro.
-
-- [ ] **Step 5: Commit + push**
-
-```bash
-git add pnpm-lock.yaml
-git commit -m "chore: regen pnpm-lock após drift de overrides (destrava CI/deploy frozen-lockfile)
-
-Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
-git push origin feat/internal-resolve-by-whatsapp
-```
-
-- [ ] **Step 6: Aguardar CI verde**
-
-```bash
-gh pr checks 14 --repo gucancado/beeads-bloquim --watch
-```
-Expected: `build-and-test pass`. Se vermelho → `gh run view <id> --log-failed`, diagnosticar, NÃO mergear.
+- [x] **Step 1: Worktree isolado**: `git worktree add /c/tmp/bloquim-r1 origin/feat/internal-resolve-by-whatsapp` + branch `fix/pnpm-lock-regen`.
+- [x] **Step 2: Diagnóstico**: `build_pack=dockerfile`, `deploy/api-server/Dockerfile` usa `corepack prepare pnpm@11.4.0`; CI em `.github/workflows/ci.yml:43` usava `9.15.9`.
+- [x] **Step 3: Fix de 1 linha** em `.github/workflows/ci.yml`: `version: 9.15.9` → `version: 11.4.0`. Sem tocar lockfile/overrides.
+- [x] **Step 4: Verificar fresh frozen** com 11.4.0 (espelho do CI): `rm -rf node_modules; CI=true corepack pnpm@11.4.0 install --frozen-lockfile` → EXIT 0.
+- [x] **Step 5: Commit + push** pro branch do PR: `git push origin fix/pnpm-lock-regen:feat/internal-resolve-by-whatsapp` (commit `33f87f9`).
+- [ ] **Step 6: Aguardar CI verde**: `gh pr checks 14 --repo gucancado/beeads-bloquim --watch`. Se vermelho → diagnosticar, NÃO mergear.
 
 ### Task A2: Merge PR #14 + deploy bloquim-api + smoke do endpoint
 
