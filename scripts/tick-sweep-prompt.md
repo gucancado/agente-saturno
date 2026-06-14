@@ -3,36 +3,58 @@
 Apêndice ao system prompt durante invocações do `claude --print` chamadas por `tick-sweep.sh`.
 
 Diferente do tick task-driven (`tick-prompt.md`): aqui **não há fila de tarefas**. Você está
-auditando **um projeto** (o do `cwd`) varrendo suas fontes e aplicando regras.
+auditando **um projeto** (o do `cwd`) varrendo suas fontes e aplicando regras. **As fontes ESTÃO
+plugadas** (inbox do worker via MCP `platform`, Bloquim via MCP `bloquim`). Não existe "Fase 0":
+você DEVE coletar sinais e avaliar as regras de verdade neste tick. Não finalize com boilerplate
+do tipo "fontes não plugadas" — isso é bug, não comportamento esperado.
 
 ## Entradas (via stdin)
 
-- `TICK_ID`: identificador único deste tick (`YYYYMMDDTHHMMSSZ-<profile>-<pid>`). Use em comentários, logs e no ledger.
+Uma linha: `TICK_ID=<id> SLUG=<slug> R1_VERDICT_DM_TO=<numero-ou-vazio>`.
+
+- `TICK_ID`: identificador único deste tick. Use em comentários, logs e no ledger.
 - `SLUG`: slug do projeto sendo auditado (== diretório do `cwd`).
+- `R1_VERDICT_DM_TO`: se **não-vazio**, você está em **MODO VEREDITO** (teste) — ver R1 abaixo.
 
 ## Sequência obrigatória
 
-1. **Ler `PROJECT.md`** no cwd (briefing do projeto). Já vem via `@PROJECT.md` no CLAUDE.md; releia pra contexto recente.
+1. **Ler `PROJECT.md`** no cwd (briefing do projeto). Releia pra contexto recente.
 
-2. **Coletar sinais das fontes do projeto** (as que estiverem configuradas neste agente/projeto):
-   - mensagens recentes do grupo (via worker/inbox),
-   - tarefas (via `bloquim:*`),
-   - alertas do painel,
-   - transcrições de reunião.
-   (Na Fase 0 as fontes ainda não estão plugadas — se nenhuma estiver disponível, registre "sem fontes" e finalize.)
+2. **Resolver o projeto no mapa.** Ler `_platform/workspace-map.json` e localizar o objeto com
+   `slug == SLUG`. Extrair:
+   - `whatsapp_group_jid` (forma `<id>@g.us`) → o grupo WhatsApp deste projeto.
+   - `bloquim_workspace_id` → o workspace Bloquim deste projeto.
 
-3. **Avaliar as regras** disponíveis:
-   - globais em `~/.claude/skills/_base/`,
-   - específicas do projeto em `.claude/skills/` deste diretório.
-   Cada regra é `condição → ação`.
+3. **Executar a regra R1 — promessa da equipe vira tarefa.** Esta é a regra ativa do sweep.
+   - **Leia e siga literalmente** `~/.claude/skills/_base/regra-promessa-vira-tarefa/SKILL.md`.
+     O fluxo completo (coleta, classificação de autor equipe×cliente, detecção de promessa,
+     dedup, ação) vive nesse arquivo. NÃO parafraseie de memória — leia o arquivo e execute os
+     passos dele neste tick.
+   - Coleta de sinais: chame `mcp__platform__inbox_list_unread({ limit: 100 })`. Se vierem 100,
+     repita até < 100. Considere **apenas** mensagens cujo `identifier` == `"+" + digitos(whatsapp_group_jid)`
+     (ex.: `120363426336988804@g.us` → `+120363426336988804`). Ignore (NÃO marque lido) mensagens
+     de outro `identifier`.
+   - Classifique cada autor (equipe × cliente) e detecte promessa conforme a skill. Só promessa de
+     EQUIPE (resolvida via identidade Bloquim no workspace do projeto) gera ação.
 
 4. **Antes de qualquer ação externa**, invocar `aprovacao-humana` para classificar L0/L1/L2.
 
-5. **Agir** conforme a regra (postar no grupo, DM, email, op Bloquim) — respeitando o nível de aprovação.
+5. **Agir** conforme a R1:
+   - **MODO NORMAL** (`R1_VERDICT_DM_TO` vazio): criar tarefa Bloquim (L0) no `bloquim_workspace_id`,
+     gravar ledger, marcar inbox lido — exatamente como a skill descreve (Passo 5).
+   - **MODO VEREDITO** (`R1_VERDICT_DM_TO` não-vazio): **NÃO** crie tarefa, **NÃO** mexa em
+     ledger/inbox. Componha **UM veredito real** do tick (pt-BR curto): `TICK_ID`, nº de msgs novas
+     avaliadas, e por mensagem relevante a decisão (autor, equipe/cliente, é promessa?, e se for
+     promessa de equipe que tarefa criaria: título + prazo). Se nada relevante: "nenhuma promessa de
+     equipe; nada a fazer". Envie **um DM por tick** via
+     `mcp__platform__send_whatsapp_dm({ to: "<R1_VERDICT_DM_TO>", text: "<veredito>" })`.
+     Envie **mesmo sem promessa** (é o canal de observação do teste). `to` é sempre o
+     `R1_VERDICT_DM_TO`; nunca outro número, nunca grupo. O veredito DEVE descrever as msgs avaliadas
+     — boilerplate genérico é falha.
 
-6. **Registrar no ledger** o que disparou (pra dedup): regra, alvo, resultado. (Mecanismo real do ledger entra na Fase 2/3; na Fase 0, registre em `memoria/log-de-execucoes/`.)
-
-7. **Memória**: nota por sweep relevante em `memoria/log-de-execucoes/<YYYY-MM-DD>-sweep_<TICK_ID>.md`.
+6. **Registrar no ledger / memória** (apenas modo normal; em modo veredito não escreve nada):
+   regra, alvo, resultado (pra dedup). Nota por sweep em
+   `memoria/log-de-execucoes/<YYYY-MM-DD>-sweep_<TICK_ID>.md`.
 
 ## Constraints duras
 
@@ -46,4 +68,7 @@ auditando **um projeto** (o do `cwd`) varrendo suas fontes e aplicando regras.
 ## Se algo der errado
 
 - Falha em ação externa → registre no log + deixe pro próximo sweep.
+- Inbox vazia / nenhuma msg do grupo → em modo veredito, mande o veredito "0 msgs novas do grupo;
+  nada a avaliar"; em modo normal, registre "sem sinais novos" e finalize. **Não** invente o
+  boilerplate de "fontes não plugadas".
 - Hard error inesperado → não engula; responda com descrição clara pra `tick-sweep.sh` registrar incidente.
