@@ -121,6 +121,12 @@ for SLUG in $SLUGS; do
   RES_SUMMARY=$(jq -r '.subtype // .result // empty' <<<"$CLAUDE_OUT" 2>/dev/null | head -c 500 || true)
   log "claude OK projeto $SLUG — resultado: ${RES_SUMMARY:-<sem texto>}"
 
+  # P0 (custo): surface o breakdown de tokens no SUCESSO (antes só na falha) pra
+  # atribuir onde o custo do tick mora (schema MCP vs histórico de tool-results vs
+  # output). Lê .usage/.modelUsage/.num_turns do CLAUDE_OUT (output-format json).
+  USAGE_JSON=$(jq -c '{usage, modelUsage, num_turns, duration_ms, duration_api_ms}' <<<"$CLAUDE_OUT" 2>/dev/null || echo '{}')
+  log "usage: $USAGE_JSON"
+
   TICK_COST=$(jq -r '.total_cost_usd // .cost_usd // 0' <<<"$CLAUDE_OUT" 2>/dev/null || echo 0)
   echo "{\"tick_id\":\"$TICK_ID\",\"project\":\"$SLUG\",\"cost_usd\":$TICK_COST,\"at\":\"$(date -u +%FT%TZ)\"}" \
     >> "$COST_FILE"
