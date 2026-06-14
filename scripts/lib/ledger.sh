@@ -41,9 +41,8 @@ ledger_add() {
 }
 
 # ── Padrão jq pro agente (sem bash) ─────────────────────────────────────────
-# Checar (vazio = novo; não-vazio = já feito):
-#   jq -c --arg r "<rule>" --arg k "<key>" 'select(.rule==$r and .key==$k)' \
-#     projetos/<slug>/memoria/_ledger.jsonl 2>/dev/null | head -1
+# Checar (true = já feito; false/empty = novo). O AGENTE não tem head/tail:
+#   cat projetos/<slug>/memoria/_ledger.jsonl 2>/dev/null | jq -s --arg r "<rule>" --arg k "<key>" 'any(.[]; .rule==$r and .key==$k)'
 # Registrar:
 #   jq -nc --arg ts "<iso>" --arg r "<rule>" --arg k "<key>" --argjson m '<meta>' \
 #     '{ts:$ts,rule:$r,key:$k,meta:$m}' >> projetos/<slug>/memoria/_ledger.jsonl
