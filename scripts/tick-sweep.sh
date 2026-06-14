@@ -99,7 +99,7 @@ for SLUG in $SLUGS; do
       --max-turns "$MAX_TURNS" \
       --output-format json \
       --append-system-prompt "$(cat "$WORKSPACE/scripts/tick-sweep-prompt.md")" \
-      <<<"TICK_ID=$TICK_ID SLUG=$SLUG" \
+      <<<"TICK_ID=$TICK_ID SLUG=$SLUG R1_VERDICT_DM_TO=${R1_VERDICT_DM_TO:-}" \
       2>>"$LOG_DIR/claude.${TICK_ID}.log"
   )
   CLAUDE_EXIT=$?

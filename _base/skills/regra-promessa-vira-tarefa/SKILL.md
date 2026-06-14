@@ -5,7 +5,18 @@ description: REGRA DE AUDITORIA (R1). No sweep, quando um membro da EQUIPE BeeAd
 
 # R1 — Promessa da equipe no grupo vira tarefa
 
-Modo AMPLO de detecção. Só age sobre EQUIPE (Camada 1, autoritativa). Zero saída externa.
+Modo AMPLO de detecção. Só age sobre EQUIPE (Camada 1, autoritativa). **Nunca posta em grupo.** Ação normal = criar tarefa Bloquim (L0). Em **MODO VEREDITO** (teste) = manda DM ao owner via B em vez de criar tarefa (ver abaixo).
+
+## MODO VEREDITO (teste, env-gated)
+Se o input do tick trouxer `R1_VERDICT_DM_TO=<numero>` **não-vazio**, você está em modo teste:
+- **NÃO crie tarefa no Bloquim.** NÃO marque inbox como lida. NÃO escreva no ledger.
+- Avalie o grupo normalmente (Passos 1–4: identidade + detecção de promessa).
+- Ao final, componha **UM veredito** do tick e envie via `platform:send_whatsapp_dm({ to: "<numero>", text: "<veredito>" })`.
+- O veredito descreve, em pt-BR curto: TICK_ID, nº de msgs novas avaliadas, e por mensagem relevante a decisão (autor, equipe/cliente, é promessa?, e — se for promessa de equipe — que tarefa CRIARIA: título + prazo). Se nada relevante: "nenhuma promessa de equipe; nada a fazer".
+- Envie **mesmo sem promessa** (é o canal de observação do teste). Um DM por tick.
+- `to` é sempre o número do `R1_VERDICT_DM_TO` (o owner). NUNCA mande pra outro número nem pra grupo.
+
+Quando `R1_VERDICT_DM_TO` estiver vazio/ausente → ignore esta seção e siga o fluxo normal (cria tarefa no Passo 5).
 
 ## Runtime (limites duros)
 Bash só: `git/date/jq/yq/cat/ls/mkdir`. SEM `head/tail/sha1sum/printf/awk/sed/tr/curl`. Ler JSONL com `cat … 2>/dev/null | jq -s …`. Append com `jq -nc … >> arquivo`.
@@ -54,6 +65,8 @@ Extrair:
 2. Busca Bloquim — `search_tasks({ query:"<1-3 keywords do objeto>", workspaceId })` (ILIKE, limita 20 → query específica). Se já existe tarefa cobrindo → SKIP e registrar no ledger.
 
 ## Passo 5 — Criar tarefa (L0) — ordem transacional
+> **Se em MODO VEREDITO** (`R1_VERDICT_DM_TO` não-vazio): **pule este passo** — não cria tarefa, não mexe em ledger/inbox; em vez disso envie o veredito do tick (ver seção MODO VEREDITO).
+
 Invocar `aprovacao-humana` (action `bloquim.create_task` → L0 → executa direto). Depois:
 1. `create_task`:
    - `title`: "<verbo> <objeto> — prometido no grupo".
