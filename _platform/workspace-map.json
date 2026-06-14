@@ -9,7 +9,9 @@
     {
       "name": "Clubinho da História",
       "slug": "clubinho-da-historia",
-      "whatsapp_group_jid": "120363308683104573@g.us",
+      "_whatsapp_group_jid_prod": "120363308683104573@g.us",
+      "whatsapp_group_jid": "120363426336988804@g.us",
+      "_note_jid": "TEMP 2026-06-14: repontado p/ grupo de teste (120363426336988804) p/ validar R1 ponta-a-ponta. Restaurar p/ _whatsapp_group_jid_prod depois do teste.",
       "bloquim_workspace_id": "e21deb6f-ef7e-4cd5-a40f-fa503859d8a6"
     }
   ]
