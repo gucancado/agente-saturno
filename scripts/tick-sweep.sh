@@ -106,6 +106,8 @@ for SLUG in $SLUGS; do
 
   if [[ $CLAUDE_EXIT -ne 0 ]]; then
     log "claude falhou no projeto $SLUG (exit=$CLAUDE_EXIT)"
+    log "--- claude stdout (CLAUDE_OUT, head) ---"
+    echo "${CLAUDE_OUT:0:1200}"
     log "--- claude stderr (tail) ---"
     tail -30 "$LOG_DIR/claude.${TICK_ID}.log" 2>/dev/null || true
     continue
