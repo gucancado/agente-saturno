@@ -53,16 +53,36 @@ profiles:
   sweep:
     enabled: true                    # perfil ativo do saturno (auditor)
     runner: tick-sweep.sh
-    crons:
-      - "*/10 * * * *"             # a cada 10 min
+    crons:                           # ponderado: auditor não precisa de latência de 10min
+      - "*/15 9-19 * * 1-5"          # comercial: 15min
+      - "*/45 0-8,20-23 * * 1-5"     # off-hours dias úteis: 45min
+      - "*/45 * * * 0,6"             # fim de semana: 45min
     timezone: America/Sao_Paulo
-    model: claude-sonnet-4-6
-    max_turns_per_workspace: 40
+    model: claude-haiku-4-5-20251001 # R1 é rule-following → Haiku (~3-5x mais barato que Sonnet)
+    max_turns_per_workspace: 12      # R1 fecha em ~6-10; teto contra runaway (lição do lua)
+    # Slim de tools: só o que as regras usam (~49 MCP tools → ~16). Corta ~7-10k tok/turn.
+    # Built-ins + tools do R1 (+ headroom p/ regras de cobrança/destrave próximas).
+    allowed_tools:
+      - Bash
+      - Read
+      - Write
+      - Edit
+      - mcp__platform__inbox_list_unread
+      - mcp__platform__inbox_mark_read
+      - mcp__platform__resolve_whatsapp_identity
+      - mcp__platform__send_whatsapp_dm
+      - mcp__bloquim__create_task
+      - mcp__bloquim__search_tasks
+      - mcp__bloquim__list_workspace_tasks
+      - mcp__bloquim__list_workspace_members
+      - mcp__bloquim__get_task
+      - mcp__bloquim__add_task_comment
+      - mcp__bloquim__set_task_status
+      - mcp__bloquim__set_task_schedule
 
 # Guardrails de custo. Soft cap — degradação graciosa antes do hard cap do Anthropic.
-# Atendente típico: ~$1.80/dia. Cap 2.7x = $5.00.
-# Calibrar por agente (atendente vs batch têm perfis diferentes — ver SPEC §17.4).
+# Saturno (auditor, 1 projeto, Haiku, tools slim): perfil enxuto.
 guardrails:
-  cost_cap_usd_per_day: 5.00
-  cost_cap_usd_per_tick: 0.50
+  cost_cap_usd_per_day: 1.50
+  cost_cap_usd_per_tick: 0.12
   alert_threshold_pct: 80

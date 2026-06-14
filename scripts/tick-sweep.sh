@@ -56,6 +56,9 @@ if [[ "$ENABLED" != "true" ]]; then
 fi
 MODEL=$(yq -r ".profiles.$PROFILE.model // \"claude-sonnet-4-6\"" "$CADENCIA")
 MAX_TURNS=$(yq -r ".profiles.$PROFILE.max_turns_per_workspace // 40" "$CADENCIA")
+# Slim de tools: se o perfil define allowed_tools, restringe a superfície oferecida ao
+# modelo (corta tokens de schema de ~49 tools p/ ~16). Vazio = sem restrição.
+ALLOWED_TOOLS=$(yq -r ".profiles.$PROFILE.allowed_tools // [] | join(\",\")" "$CADENCIA")
 
 # ── Git pull (best-effort) ────────────────────────────────────────────────
 git -C "$WORKSPACE" pull --rebase --autostash >/dev/null 2>>"$LOG_DIR/git.log" || log "git pull falhou (continua)"
@@ -92,13 +95,14 @@ for SLUG in $SLUGS; do
     continue
   fi
 
+  # Monta args; --allowedTools (vírgula, 1 arg — não-variádico aqui) só se definido.
+  CLAUDE_ARGS=(--print --model "$MODEL" --max-turns "$MAX_TURNS" --output-format json)
+  [[ -n "$ALLOWED_TOOLS" ]] && CLAUDE_ARGS+=(--allowedTools "$ALLOWED_TOOLS")
+  CLAUDE_ARGS+=(--append-system-prompt "$(cat "$WORKSPACE/scripts/tick-sweep-prompt.md")")
+
   CLAUDE_OUT=$(
     cd "$CWD" || exit 1
-    claude --print \
-      --model "$MODEL" \
-      --max-turns "$MAX_TURNS" \
-      --output-format json \
-      --append-system-prompt "$(cat "$WORKSPACE/scripts/tick-sweep-prompt.md")" \
+    claude "${CLAUDE_ARGS[@]}" \
       <<<"TICK_ID=$TICK_ID SLUG=$SLUG R1_VERDICT_DM_TO=${R1_VERDICT_DM_TO:-}" \
       2>>"$LOG_DIR/claude.${TICK_ID}.log"
   )
