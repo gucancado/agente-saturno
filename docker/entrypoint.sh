@@ -66,7 +66,9 @@ for PROFILE in $PROFILES; do
     # inline na mesma linha do schedule (invalida o crontab e o supercronic sai
     # imediatamente, causando crash-loop do container).
     echo "CRON_TZ=$TZ" >> "$CRONTAB"
-    echo "$CRON_EXPR /workspace/scripts/$RUNNER $PROFILE >> /workspace/.logs/supercronic.log 2>&1" \
+    # tee: output do tick vai pro arquivo E pro stdout (supercronic → logs Coolify),
+    # pra dar visibilidade do tick sem precisar de exec/SSH no container.
+    echo "$CRON_EXPR /workspace/scripts/$RUNNER $PROFILE 2>&1 | tee -a /workspace/.logs/supercronic.log" \
       >> "$CRONTAB"
   done <<< "$CRONS"
 done

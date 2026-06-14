@@ -22,7 +22,7 @@ CADENCIA="${WORKSPACE}/scripts/cadencia.yml"
 
 mkdir -p "$(dirname "$LOCK_FILE")" "$LOG_DIR" "$COST_DIR"
 
-log() { echo "[$(date -u +%FT%TZ)] [$TICK_ID] $*" >> "$LOG_DIR/tick.log"; }
+log() { echo "[$(date -u +%FT%TZ)] [$TICK_ID] $*" | tee -a "$LOG_DIR/tick.log"; }
 
 # ── Lock por perfil ──────────────────────────────────────────────────────
 exec 9>"$LOCK_FILE"
@@ -106,8 +106,14 @@ for SLUG in $SLUGS; do
 
   if [[ $CLAUDE_EXIT -ne 0 ]]; then
     log "claude falhou no projeto $SLUG (exit=$CLAUDE_EXIT)"
+    log "--- claude stderr (tail) ---"
+    tail -30 "$LOG_DIR/claude.${TICK_ID}.log" 2>/dev/null || true
     continue
   fi
+
+  # Surface o veredito/resultado do agente no stdout (visibilidade via Coolify).
+  RES_SUMMARY=$(jq -r '.subtype // .result // empty' <<<"$CLAUDE_OUT" 2>/dev/null | head -c 500 || true)
+  log "claude OK projeto $SLUG — resultado: ${RES_SUMMARY:-<sem texto>}"
 
   TICK_COST=$(jq -r '.total_cost_usd // .cost_usd // 0' <<<"$CLAUDE_OUT" 2>/dev/null || echo 0)
   echo "{\"tick_id\":\"$TICK_ID\",\"project\":\"$SLUG\",\"cost_usd\":$TICK_COST,\"at\":\"$(date -u +%FT%TZ)\"}" \
