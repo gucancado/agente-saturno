@@ -11,10 +11,9 @@ Modo AMPLO de detecção. Só age sobre EQUIPE (Camada 1, autoritativa). **Nunca
 Se o input do tick trouxer `R1_VERDICT_DM_TO=<numero>` **não-vazio**, você está em modo teste:
 - **NÃO crie tarefa no Bloquim.** NÃO marque inbox como lida. NÃO escreva no ledger.
 - Avalie o grupo normalmente (Passos 1–4: identidade + detecção de promessa).
-- Ao final, componha **UM veredito** do tick e envie via `platform:send_whatsapp_dm({ to: "<numero>", text: "<veredito>" })`.
-- O veredito descreve, em pt-BR curto: TICK_ID, nº de msgs novas avaliadas, e por mensagem relevante a decisão (autor, equipe/cliente, é promessa?, e — se for promessa de equipe — que tarefa CRIARIA: título + prazo). Se nada relevante: "nenhuma promessa de equipe; nada a fazer".
-- Envie **mesmo sem promessa** (é o canal de observação do teste). Um DM por tick.
-- `to` é sempre o número do `R1_VERDICT_DM_TO` (o owner). NUNCA mande pra outro número nem pra grupo.
+- Componha **UM veredito** do tick: pt-BR curto, descrevendo TICK_ID, nº de msgs novas avaliadas, e por mensagem relevante a decisão (autor, equipe/cliente, é promessa?, e — se for promessa de equipe — que tarefa CRIARIA: título + prazo). Se nada relevante: "nenhuma promessa de equipe; nada a fazer". Sempre produza veredito, mesmo sem promessa (é o canal de observação do teste).
+- **FONTE CONFIÁVEL = o log do tick.** Sua **mensagem final de texto** (a última coisa que você escreve, depois de todas as tool calls) DEVE SER o **veredito completo, literal** — ele é capturado em `.result` e aparece no log do Coolify. NÃO termine com "veredito enviado com sucesso" nem resumo; termine com o TEXTO do veredito em si.
+- **Adicionalmente** (best-effort), envie o mesmo veredito por DM: `platform:send_whatsapp_dm({ to: "<R1_VERDICT_DM_TO>", text: "<veredito>" })`. ⚠️ O DM via número B só entrega dentro da janela de 24h do WhatsApp (Meta retorna WAMID mas DROPA a entrega fora da janela) — por isso o log é a fonte de verdade, não o DM. Um DM por tick. `to` é sempre `R1_VERDICT_DM_TO` (o owner); NUNCA outro número nem grupo.
 
 Quando `R1_VERDICT_DM_TO` estiver vazio/ausente → ignore esta seção e siga o fluxo normal (cria tarefa no Passo 5).
 

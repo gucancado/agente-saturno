@@ -46,11 +46,13 @@ Uma linha: `TICK_ID=<id> SLUG=<slug> R1_VERDICT_DM_TO=<numero-ou-vazio>`.
      ledger/inbox. Componha **UM veredito real** do tick (pt-BR curto): `TICK_ID`, nº de msgs novas
      avaliadas, e por mensagem relevante a decisão (autor, equipe/cliente, é promessa?, e se for
      promessa de equipe que tarefa criaria: título + prazo). Se nada relevante: "nenhuma promessa de
-     equipe; nada a fazer". Envie **um DM por tick** via
-     `mcp__platform__send_whatsapp_dm({ to: "<R1_VERDICT_DM_TO>", text: "<veredito>" })`.
-     Envie **mesmo sem promessa** (é o canal de observação do teste). `to` é sempre o
-     `R1_VERDICT_DM_TO`; nunca outro número, nunca grupo. O veredito DEVE descrever as msgs avaliadas
-     — boilerplate genérico é falha.
+     equipe; nada a fazer". O veredito DEVE descrever as msgs avaliadas — boilerplate genérico é falha.
+     - **Sua mensagem FINAL de texto deve SER o veredito completo e literal** (capturado no `.result`
+       do log do Coolify = fonte de verdade). NÃO termine com "veredito enviado com sucesso".
+     - **Adicionalmente** envie o mesmo veredito por DM (best-effort):
+       `mcp__platform__send_whatsapp_dm({ to: "<R1_VERDICT_DM_TO>", text: "<veredito>" })`. O DM pode
+       não entregar fora da janela de 24h do WhatsApp — por isso o log é a fonte, não o DM. Um DM por
+       tick; `to` é sempre `R1_VERDICT_DM_TO`, nunca outro número nem grupo.
 
 6. **Registrar no ledger / memória** (apenas modo normal; em modo veredito não escreve nada):
    regra, alvo, resultado (pra dedup). Nota por sweep em
