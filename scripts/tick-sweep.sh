@@ -61,7 +61,14 @@ MAX_TURNS=$(yq -r ".profiles.$PROFILE.max_turns_per_workspace // 40" "$CADENCIA"
 ALLOWED_TOOLS=$(yq -r ".profiles.$PROFILE.allowed_tools // [] | join(\",\")" "$CADENCIA")
 
 # ── Git pull (best-effort) ────────────────────────────────────────────────
-git -C "$WORKSPACE" pull --rebase --autostash >/dev/null 2>>"$LOG_DIR/git.log" || log "git pull falhou (continua)"
+# Só se /workspace for repo git. No deploy atual o build não traz .git (Coolify
+# strip-a do contexto) → /workspace NÃO é repo; sem o guard isto logava
+# "fatal: not a git repository" todo tick. Persistência cross-redeploy NÃO
+# depende disso: cursor/identidade se auto-curam e o dedup real é search_tasks
+# no Bloquim. Se um dia houver .git (volume/build), o git volta a funcionar.
+if git -C "$WORKSPACE" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  git -C "$WORKSPACE" pull --rebase --autostash >/dev/null 2>>"$LOG_DIR/git.log" || log "git pull falhou (continua)"
+fi
 
 # ── Lista de projetos a varrer ────────────────────────────────────────────
 SLUGS=$("$WORKSPACE/scripts/lib/sweep-projects.sh" 2>>"$LOG_DIR/tick.log")
@@ -164,7 +171,10 @@ for SLUG in $SLUGS; do
 done
 
 # ── Commit + push de memoria (se houve escrita) ───────────────────────────
-if [[ "${SWEEP_DRY_RUN:-0}" != "1" ]]; then
+# Só se /workspace for repo git (ver nota no git pull acima). Sem .git este bloco
+# logava "fatal: not a git repository" todo tick; o guard silencia. Quando houver
+# repo + remote, a persistência via git volta automática.
+if [[ "${SWEEP_DRY_RUN:-0}" != "1" ]] && git -C "$WORKSPACE" rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   cd "$WORKSPACE" || { log "cd workspace falhou; pulando commit"; exit 1; }
   if [[ -n "$(git status --porcelain)" ]]; then
     git add -A
