@@ -25,9 +25,9 @@ Bash só: `git/date/jq/yq/cat/ls/mkdir`. SEM `head/tail/sha1sum/printf/awk/sed/t
 Em TODO lugar (inbox/cache/ledger/tool): só dígitos. A inbox entrega `author` como `+<E164>` → tirar não-dígitos. Ex.: `+5531998877665` → `5531998877665`.
 
 ## Passo 1 — Coletar mensagens do grupo
-- `platform:inbox_list_unread({ limit: 100 })`. Se vierem 100, repetir até < 100. Processar e marcar lido SÓ as do grupo deste projeto.
-- Grupo do projeto: `identifier == "+" + digitos(whatsapp_group_jid)` do `_platform/workspace-map.json` (SLUG do cwd). Ex. clubinho: `+120363308683104573`.
-- Ignorar (NÃO marcar lido) mensagens de outro `identifier`.
+- Grupo do projeto: `GID = "+" + digitos(whatsapp_group_jid)` do `_platform/workspace-map.json` (SLUG do cwd). Ex. clubinho: `+120363308683104573`.
+- `platform:inbox_list_unread({ limit: 100, identifier: GID })` — **passe o `identifier`**: o worker filtra no servidor e devolve só as mensagens deste grupo (corta a "parede FIFO" em que outros grupos enchiam o teto). Se vierem 100, repetir até < 100.
+- Por segurança, ainda assim só processe/marque lido mensagens cujo `identifier == GID`. Ignorar (NÃO marcar lido) qualquer outro `identifier`.
 
 ## Passo 2 — Classificar autor (equipe × cliente)
 Para cada mensagem do grupo, `author_digits`:
