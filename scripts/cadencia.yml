@@ -59,7 +59,7 @@ profiles:
       - "*/45 * * * 0,6"             # fim de semana: 45min
     timezone: America/Sao_Paulo
     model: claude-haiku-4-5-20251001 # R1 é rule-following → Haiku (~3-5x mais barato que Sonnet)
-    max_turns_per_workspace: 12      # R1 fecha em ~6-10; teto contra runaway (lição do lua)
+    max_turns_per_workspace: 20      # R1 c/ LID→tel + resolução de identidade por msg estoura 12 (error_max_turns em sweep-104/292, 2026-06-16); 20 dá folga, runaway barrado pelo cost cap
     # Slim de tools: só o que as regras usam (~49 MCP tools → ~16). Corta ~7-10k tok/turn.
     # Built-ins + tools do R1 (+ headroom p/ regras de cobrança/destrave próximas).
     allowed_tools:
