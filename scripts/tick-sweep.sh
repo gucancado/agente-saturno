@@ -100,13 +100,26 @@ for SLUG in $SLUGS; do
   [[ -n "$ALLOWED_TOOLS" ]] && CLAUDE_ARGS+=(--allowedTools "$ALLOWED_TOOLS")
   CLAUDE_ARGS+=(--append-system-prompt "$(cat "$WORKSPACE/scripts/tick-sweep-prompt.md")")
 
-  CLAUDE_OUT=$(
-    cd "$CWD" || exit 1
+  run_claude() {
+    cd "$CWD" || return 1
     claude "${CLAUDE_ARGS[@]}" \
       <<<"TICK_ID=$TICK_ID SLUG=$SLUG R1_VERDICT_DM_TO=${R1_VERDICT_DM_TO:-}" \
       2>>"$LOG_DIR/claude.${TICK_ID}.log"
-  )
+  }
+
+  CLAUDE_OUT=$(run_claude)
   CLAUDE_EXIT=$?
+
+  # Retry ÚNICO só na assinatura de COLD-START: exit!=0 E stdout sem JSON válido
+  # (MCP/npx ainda esquentando logo após deploy → claude morre sem produzir
+  # resultado). Resultado JSON válido com erro (ex. error_max_turns) NÃO retenta:
+  # é resultado real, re-rodar só queimaria custo.
+  if [[ $CLAUDE_EXIT -ne 0 ]] && ! jq -e . >/dev/null 2>&1 <<<"$CLAUDE_OUT"; then
+    log "claude exit=$CLAUDE_EXIT sem JSON no projeto $SLUG — assinatura de cold-start; retry em 30s"
+    sleep 30
+    CLAUDE_OUT=$(run_claude)
+    CLAUDE_EXIT=$?
+  fi
 
   if [[ $CLAUDE_EXIT -ne 0 ]]; then
     log "claude falhou no projeto $SLUG (exit=$CLAUDE_EXIT)"
