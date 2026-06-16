@@ -120,7 +120,7 @@ for SLUG in $SLUGS; do
   # Surface o veredito/resultado do agente no stdout (visibilidade via Coolify).
   # .result = texto final do agente (o veredito, em modo veredito). Em sucesso o
   # .subtype é só "success" e mascarava o veredito → priorizar .result.
-  RES_SUMMARY=$(jq -r '.result // .subtype // empty' <<<"$CLAUDE_OUT" 2>/dev/null | head -c 500 || true)
+  RES_SUMMARY=$(jq -r '.result // .subtype // empty' <<<"$CLAUDE_OUT" 2>/dev/null | head -c 2000 || true)
   log "claude OK projeto $SLUG — resultado: ${RES_SUMMARY:-<sem texto>}"
 
   # P0 (custo): surface o breakdown de tokens no SUCESSO (antes só na falha) pra
