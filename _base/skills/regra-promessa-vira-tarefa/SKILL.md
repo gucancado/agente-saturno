@@ -30,7 +30,14 @@ Em TODO lugar (inbox/cache/ledger/tool): só dígitos. A inbox entrega `author` 
 - Por segurança, ainda assim só processe/marque lido mensagens cujo `identifier == GID`. Ignorar (NÃO marcar lido) qualquer outro `identifier`.
 
 ## Passo 2 — Classificar autor (equipe × cliente)
-Para cada mensagem do grupo, `author_digits`:
+
+**Passo 2.0 — Normalizar LID→telefone (WhatsApp esconde o telefone em grupo).**
+Em grupo o `author` costuma vir como **LID** (id de privacidade, ex. `166730898927796`), não o telefone — `resolve_whatsapp_identity` resolve por telefone e daria `null`. Antes de qualquer resolução, traduza:
+- Carregue `_platform/lid-map.json`. Se `author_digits` for chave em `.lids`, **substitua** `author_digits` pelo telefone mapeado (`.lids[author_digits]`) e prossiga; registre no log a tradução LID→telefone.
+- Se não estiver no mapa, use `author_digits` como veio (pode ser telefone real OU LID desconhecido). Se a resolução der `null` E a msg parecer promessa de equipe, cai na Camada 2 (nota pro owner cadastrar — incluindo, se for o caso, **adicionar o LID ao `lid-map.json`**). NÃO crie tarefa nesse caso.
+- `cat _platform/lid-map.json 2>/dev/null | jq -r --arg l "<author_digits>" '.lids[$l] // empty'` → se vier telefone, use-o como `author_digits` daqui pra frente.
+
+Para cada mensagem do grupo, `author_digits` (já normalizado pelo 2.0):
 1. **Cache primeiro** — `projetos/<slug>/memoria/_identidades.jsonl`:
    `cat projetos/<slug>/memoria/_identidades.jsonl 2>/dev/null | jq -s --arg p "<author_digits>" 'map(select(.phone==$p)) | last // empty'`
    Se vier objeto com `class` em (`equipe`/`cliente`) e `confidence=="alta"`, usar.

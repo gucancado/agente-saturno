@@ -1,0 +1,7 @@
+{
+  "version": 1,
+  "comment": "Mapa LID (WhatsApp privacy id) → telefone E.164 (só dígitos). Em GRUPO o WhatsApp/Baileys entrega o autor como LID (key.participant '<n>@lid'), NÃO o telefone real. `resolve_whatsapp_identity` resolve por telefone → LID dá null → autor classificado como não-equipe e a detecção positiva de promessa nunca passa. Este mapa traduz LIDs conhecidos da EQUIPE para o telefone ANTES da resolução. WORKAROUND saturno-only (não mexe no worker): o fix durável é o worker extrair o telefone do payload (participantPn/participantAlt) e gravar em `author`. Manter manual por enquanto; cada entrada precisa de confirmação humana (push_name não é credencial).",
+  "lids": {
+    "166730898927796": "5531999594121"
+  }
+}
