@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "comment": "STOPGAP de identidade por push_name (display name do WhatsApp). Usado SÓ quando a Camada 1 do R1 (LID→telefone→membro Bloquim) NÃO resolve — hoje o `author` da inbox vem como LID não-mapeado, então a Camada 1 sempre cai em null e a promessa de equipe nunca seria detectada. Este roster permite classificar EQUIPE por push_name enquanto: (a) o worker não expõe o telefone real do payload Evolution (item C1, participantPn/participantAlt → vira author=telefone), e/ou (b) o lid-map não é semeado. push_name é EDITÁVEL pelo remetente → NÃO é credencial → este stopgap SÓ vale em MODO VEREDITO (observação; nunca cria tarefa real). Quando o worker C1 entrar, este roster é aposentado.",
+  "match_rules": "Normalizar o push_name: lowercase; remover acentos (á→a ã/â→a ç→c é/ê→e í→i ó/ô/õ→o ú→u); colapsar espaços; REMOVER sufixo de cargo a partir de ' - ' (ex.: 'Bruna Amaral - Assessoria CBV' → 'bruna amaral'). É EQUIPE se o nome normalizado casar uma entrada por WHOLE-WORD-PREFIX (a entrada é prefixo de palavras inteiras do nome). Ex.: entrada 'lucas marques' casa 'lucas marques'; entrada 'milena' casa 'milena souza' mas NÃO casa 'x milena'. ARMADILHA: 'bruna trotta' (EQUIPE) ≠ 'bruna amaral' (CLIENTE) — por isso o match é por nome COMPLETO, nunca por 1º nome. Entradas de um só token (ex.: 'milena') casam por 1º nome — confirmado que não há cliente homônimo nos grupos atuais; revisar se aparecer.",
+  "team_push_names": [
+    "gustavo cancado",
+    "lucas marques",
+    "rodrigo cancado",
+    "angelo freitas",
+    "bruna trotta",
+    "milena"
+  ]
+}

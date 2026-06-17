@@ -36,6 +36,14 @@ Em grupo o `author` costuma vir como **LID** (id de privacidade, ex. `1667308989
 - Se não estiver no mapa, use `author_digits` como veio (pode ser telefone real OU LID desconhecido). Se a resolução der `null` E a msg parecer promessa de equipe, cai na Camada 2 (nota pro owner cadastrar — incluindo, se for o caso, **adicionar o LID ao `lid-map.json`**). NÃO crie tarefa nesse caso.
 - `cat _platform/lid-map.json 2>/dev/null | jq -r --arg l "<author_digits>" '.lids[$l] // empty'` → se vier telefone, use-o como `author_digits` daqui pra frente.
 
+**Passo 2.0b — STOPGAP push_name (SÓ em MODO VEREDITO).**
+Hoje o `author` da inbox vem como LID não-mapeado → a Camada 1 (abaixo) sempre resolve `null` → toda promessa seria classificada como cliente e o teste viria cego. Enquanto o worker não expõe o telefone real (item C1), use o `push_name` como sinal de identidade APENAS para o veredito (observação). **Este stopgap NUNCA cria tarefa** (Passo 5 segue exigindo Camada 1).
+- Só aplica se `R1_VERDICT_DM_TO` não-vazio (modo veredito). Fora dele, ignore esta seção.
+- Normalize o `push_name`: lowercase; remover acentos (á→a ã/â→a ç→c é/ê→e í→i ó/ô/õ→o ú→u); colapsar espaços; **remover o sufixo de cargo a partir de ` - `** (ex.: `Bruna Amaral - Assessoria CBV` → `bruna amaral`).
+- Carregue o roster: `cat _platform/team-roster.json 2>/dev/null | jq -r '.team_push_names[]?'`.
+- É **EQUIPE (stopgap)** se o nome normalizado casar uma entrada por **whole-word-prefix** (a entrada é prefixo de palavras inteiras do nome): `lucas marques`↔`lucas marques`; `milena`↔`milena souza`; mas `bruna trotta`≠`bruna amaral`. **ARMADILHA:** nunca case por 1º nome só (Bruna Trotta=equipe ≠ Bruna Amaral=cliente).
+- Ao usar este stopgap, no veredito marque a classificação como `equipe (via push_name — stopgap, confiança baixa)` para o owner saber que não foi Bloquim-autoritativa.
+
 Para cada mensagem do grupo, `author_digits` (já normalizado pelo 2.0):
 1. **Cache primeiro** — `projetos/<slug>/memoria/_identidades.jsonl`:
    `cat projetos/<slug>/memoria/_identidades.jsonl 2>/dev/null | jq -s --arg p "<author_digits>" 'map(select(.phone==$p)) | last // empty'`
@@ -43,7 +51,7 @@ Para cada mensagem do grupo, `author_digits` (já normalizado pelo 2.0):
 2. **Camada 1 (autoritativa)** — `resolve_whatsapp_identity({ phone: "<author_digits>" })`:
    - retorno objeto E `workspaces[].id` inclui o `bloquim_workspace_id` do projeto → **EQUIPE**.
    - retorno objeto mas não-membro do workspace → **CLIENTE**.
-   - retorno `"null"` → **CLIENTE por default** (segue ao Passo 2b só p/ registrar hipótese).
+   - retorno `"null"` → em **modo veredito**, aplique o **stopgap push_name (Passo 2.0b)**: se casar o roster → **EQUIPE (stopgap)** para fins de veredito; senão → **CLIENTE por default** (segue ao Passo 2b p/ registrar hipótese). Fora do modo veredito → **CLIENTE por default**.
    - Gravar/atualizar o cache (append; `source:"bloquim"`, `confidence:"alta"`).
 3. **Camada 2 (só hipótese, NUNCA cria tarefa)** — só quando Camada 1 = null E a mensagem parece promessa de equipe:
    - Sinais: fuzzy de `push_name` vs `bloquim:list_workspace_members({ workspaceId })`, memória de relacionamento, contexto.
