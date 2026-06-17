@@ -13,6 +13,27 @@
       "_whatsapp_group_jid_test": "120363426336988804@g.us",
       "_note_jid": "2026-06-17: restaurado p/ PRODUÇÃO após validar Fase 1 (pré-filtro de promessa: promessa dispara tick, chitchat skipa $0 — sweep-107/362). Modo veredito segue ON. Grupo de teste guardado em _whatsapp_group_jid_test.",
       "bloquim_workspace_id": "e21deb6f-ef7e-4cd5-a40f-fa503859d8a6"
+    },
+    {
+      "name": "CBV Clínica + BeeAds",
+      "slug": "cbv-clinica",
+      "whatsapp_group_jid": "120363424608786925@g.us",
+      "bloquim_workspace_id": "d2752dc4-f71d-44dc-9585-e2119328a712",
+      "_note": "2026-06-17: monitoramento em prod (modo veredito). subject do catálogo do worker. workspace Bloquim 'Clínica CBV'."
+    },
+    {
+      "name": "Tagless + BeeAds",
+      "slug": "tagless-brasil",
+      "whatsapp_group_jid": "553195857308-1578927607@g.us",
+      "bloquim_workspace_id": "42d00be5-12cd-4b24-8526-494fb79067be",
+      "_note": "2026-06-17: monitoramento em prod (modo veredito). JID LEGADO (fone-ts, com hífen) — depende do fix de matching que preserva hífen (has-changes.sh + skill R1). workspace Bloquim 'Tag Less'."
+    },
+    {
+      "name": "Bluma CF",
+      "slug": "bluma-cf",
+      "whatsapp_group_jid": "120363406130349751@g.us",
+      "bloquim_workspace_id": "a2ce47ec-74a0-477c-8db3-bbbdfa7e6502",
+      "_note": "2026-06-17: monitoramento em prod (modo veredito). JID identificado via msg de teste. NÃO confundir com Bluma RH (a3de7850, grupo +553197786735-1623781264)."
     }
   ]
 }

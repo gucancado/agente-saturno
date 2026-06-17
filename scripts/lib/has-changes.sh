@@ -28,9 +28,11 @@ if [[ -z "$JID" || "$JID" == "null" ]]; then
   exit 1
 fi
 
-# Inbox do worker representa o grupo como identifier "+<digitos>" (sem @g.us).
-DIGITS=$(echo "$JID" | sed 's/@.*//' | tr -cd '0-9')
-GID="+$DIGITS"
+# Inbox do worker representa o grupo como identifier "+<id-sem-@g.us>".
+# IMPORTANTE: NÃO usar `tr -cd '0-9'` — JIDs legados têm formato `<fone>-<ts>@g.us`
+# (ex. 553195857308-1578927607@g.us) e o hífen FAZ PARTE do identifier na inbox
+# (+553195857308-1578927607). Tirar só o sufixo @… e prefixar "+", mantendo hífens.
+GID="+$(echo "$JID" | sed 's/@.*//')"
 
 : "${WORKER_URL:?WORKER_URL nao definida}"
 : "${WORKER_TOKEN:?WORKER_TOKEN nao definida}"
