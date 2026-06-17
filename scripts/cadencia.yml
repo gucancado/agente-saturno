@@ -83,6 +83,7 @@ profiles:
 # Guardrails de custo. Soft cap — degradação graciosa antes do hard cap do Anthropic.
 # Saturno (auditor, 1 projeto, Haiku, tools slim): perfil enxuto.
 guardrails:
-  cost_cap_usd_per_day: 1.50
-  cost_cap_usd_per_tick: 0.12
+  cost_cap_usd_per_day: 12.00          # teto GLOBAL do agente/dia (era 1.50; dimensionado p/ 22 contas)
+  cost_cap_usd_per_project_day: 0.60   # teto POR PROJETO/dia — 1 grupo barulhento não consome o orçamento dos outros
+  cost_cap_usd_per_tick: 0.30          # teto por invocação individual (era 0.12; tick R1 real chega a $0.22)
   alert_threshold_pct: 80

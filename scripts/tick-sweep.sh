@@ -36,6 +36,7 @@ log "sweep start"
 # ── Guarda de custo (soft cap diario) ────────────────────────────────────
 COST_CAP_DAY=$(yq -r '.guardrails.cost_cap_usd_per_day // 5.0' "$CADENCIA")
 COST_CAP_TICK=$(yq -r '.guardrails.cost_cap_usd_per_tick // 0.5' "$CADENCIA")
+COST_CAP_PROJ=$(yq -r '.guardrails.cost_cap_usd_per_project_day // 0.60' "$CADENCIA")
 
 if [[ -f "$COST_FILE" ]]; then
   COST_TODAY=$(jq -s '[.[].cost_usd] | add // 0' "$COST_FILE")
@@ -90,6 +91,22 @@ for SLUG in $SLUGS; do
   # ── Gate de mudanca barato ──
   if ! "$WORKSPACE/scripts/lib/has-changes.sh" "$SLUG" 2>>"$LOG_DIR/tick.log"; then
     log "projeto $SLUG sem novidade (gate); pulando tick caro"
+    SKIPPED=$((SKIPPED+1))
+    continue
+  fi
+
+  # ── Cap de custo POR-PROJETO/dia ──
+  # Um grupo barulhento não pode consumir o orçamento dos outros (escala 22 contas).
+  # Soma as linhas do COST_FILE de hoje com este project. O teto GLOBAL do agente
+  # (cost_cap_usd_per_day) é checado lá em cima, antes do loop.
+  if [[ -f "$COST_FILE" ]]; then
+    PROJ_TODAY=$(jq -s --arg p "$SLUG" '[.[] | select(.project==$p) | .cost_usd] | add // 0' "$COST_FILE")
+  else
+    PROJ_TODAY=0
+  fi
+  OVER_PROJ=$(awk -v c="$PROJ_TODAY" -v cap="$COST_CAP_PROJ" 'BEGIN { print (c >= cap) ? 1 : 0 }')
+  if [[ "$OVER_PROJ" == "1" ]]; then
+    log "GUARDA: projeto $SLUG estourou cap diario (\$$COST_CAP_PROJ, gasto hoje \$$PROJ_TODAY); pulando"
     SKIPPED=$((SKIPPED+1))
     continue
   fi
