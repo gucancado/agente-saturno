@@ -52,10 +52,28 @@ fi
 CURSOR_FILE="$WORKSPACE/projetos/$SLUG/memoria/.sweep-cursor"
 CURSOR=$(cat "$CURSOR_FILE" 2>/dev/null || echo "")
 
+# Pré-filtro de promessa (não-LLM): só vale a pena rodar o tick CARO se alguma
+# msg nova do grupo for candidata a promessa. Chitchat não dispara → corta custo
+# em escala. Recall alto (LLM faz a precisão no tick); fail-closed.
+source "$(dirname "${BASH_SOURCE[0]}")/promise-filter.sh"
+
 # Comparacao lexicografica de ISO-8601 = ordem cronologica.
 if [[ -z "$CURSOR" || "$LATEST" > "$CURSOR" ]]; then
-  echo "has-changes[$SLUG]: novidade ($LATEST > ${CURSOR:-inicio})" >&2
-  exit 0
+  # Há msg nova. Procura ≥1 msg nova (created_at > cursor) candidata a promessa.
+  CAND=0
+  while IFS= read -r TXT; do
+    [[ -z "$TXT" ]] && continue
+    if has_promise_candidate "$TXT"; then CAND=1; break; fi
+  done < <(jq -r --arg id "$GID" --arg cur "$CURSOR" \
+      '.messages[]? | select(.identifier==$id) | select(($cur=="") or (.created_at > $cur)) | .message_text // empty' \
+      <<<"$INBOX")
+
+  if [[ "$CAND" == "1" ]]; then
+    echo "has-changes[$SLUG]: novidade c/ candidato a promessa ($LATEST > ${CURSOR:-inicio})" >&2
+    exit 0
+  fi
+  echo "has-changes[$SLUG]: msg nova mas sem candidato a promessa — pulando (cost-safe)" >&2
+  exit 1
 fi
 
 echo "has-changes[$SLUG]: sem novidade (cursor=$CURSOR)" >&2

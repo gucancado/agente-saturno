@@ -9,9 +9,9 @@
     {
       "name": "Clubinho da História",
       "slug": "clubinho-da-historia",
-      "whatsapp_group_jid": "120363308683104573@g.us",
-      "_whatsapp_group_jid_test": "120363426336988804@g.us",
-      "_note_jid": "2026-06-16: restaurado p/ grupo de PRODUÇÃO após validar R1 ponta-a-ponta no teste (#0/#1/#2 ok, sweep-103). Modo veredito segue ON (R1_VERDICT_DM_TO setado) — observa prod, NÃO cria tarefa. Grupo de teste guardado em _whatsapp_group_jid_test p/ reuso.",
+      "whatsapp_group_jid": "120363426336988804@g.us",
+      "_whatsapp_group_jid_prod": "120363308683104573@g.us",
+      "_note_jid": "TEMP 2026-06-17: repontado p/ grupo de TESTE p/ validar o pré-filtro de promessa + disallowedTools (Fase 1 do plano de custo). RESTAURAR p/ _whatsapp_group_jid_prod (120363308683104573) após validar.",
       "bloquim_workspace_id": "e21deb6f-ef7e-4cd5-a40f-fa503859d8a6"
     }
   ]
