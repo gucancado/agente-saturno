@@ -10,10 +10,13 @@ do tipo "fontes não plugadas" — isso é bug, não comportamento esperado.
 
 ## Entradas (via stdin)
 
-Uma linha: `TICK_ID=<id> SLUG=<slug> R1_VERDICT_DM_TO=<numero-ou-vazio>`.
+Uma linha: `TICK_ID=<id> SLUG=<slug> GID=<+identifier> R1_VERDICT_DM_TO=<numero-ou-vazio>`.
 
 - `TICK_ID`: identificador único deste tick. Use em comentários, logs e no ledger.
 - `SLUG`: slug do projeto sendo auditado (== diretório do `cwd`).
+- `GID`: o **identifier da inbox** deste grupo, **já computado** (ex.: `+553195857308-1578927607`).
+  **Use este valor LITERAL** ao chamar `inbox_list_unread` — NÃO o recompute a partir do JID, NÃO
+  remova hífens, NÃO altere. Copiar-colar exato. (Derivar errado já zerou a leitura: sweep-1013.)
 - `R1_VERDICT_DM_TO`: se **não-vazio**, você está em **MODO VEREDITO** (teste) — ver R1 abaixo.
 
 ## Sequência obrigatória
@@ -40,14 +43,13 @@ Uma linha: `TICK_ID=<id> SLUG=<slug> R1_VERDICT_DM_TO=<numero-ou-vazio>`.
      O fluxo completo (coleta, classificação de autor equipe×cliente, detecção de promessa,
      dedup, ação) vive nesse arquivo. NÃO parafraseie de memória — leia o arquivo e execute os
      passos dele neste tick.
-   - Coleta de sinais: compute `GID = "+" + (whatsapp_group_jid sem o sufixo "@g.us")`.
-     **PRESERVE hífens** — NÃO reduza a só dígitos: JIDs legados são `<fone>-<ts>@g.us`
-     (ex.: `553195857308-1578927607@g.us` → `+553195857308-1578927607`) e o hífen FAZ PARTE do
-     identifier na inbox; `digitos()` quebraria o match. Modernos: `120363426336988804@g.us` →
-     `+120363426336988804`. Chame `mcp__platform__inbox_list_unread({ limit: 100, identifier: GID })`
-     — **passe o `identifier`**: o worker filtra no servidor e devolve só este grupo (corta a parede
-     FIFO em que outros grupos enchem o teto de 100). Se vierem 100, repita até < 100. Por segurança,
-     ainda assim só processe mensagens cujo `identifier` == `GID`; ignore (NÃO marque lido) o resto.
+   - Coleta de sinais: use o **`GID` recebido no stdin** (já pronto, com hífens se for JID legado —
+     NÃO recompute, NÃO mexa). Chame `mcp__platform__inbox_list_unread({ limit: 100, identifier: GID })`
+     com esse valor LITERAL — **passe o `identifier`**: o worker filtra no servidor e devolve só este
+     grupo (corta a parede FIFO em que outros grupos enchem o teto de 100). Se vierem 100, repita até
+     < 100. Por segurança, ainda assim só processe mensagens cujo `identifier` == `GID`; ignore (NÃO
+     marque lido) o resto. (Confirme no resultado que veio msg desse grupo; se vier 0 mas você espera
+     tráfego, verifique que passou o `identifier` EXATO — não uma versão sem hífen.)
    - Classifique cada autor (equipe × cliente) e detecte promessa conforme a skill. Só promessa de
      EQUIPE (resolvida via identidade Bloquim no workspace do projeto) gera ação.
 

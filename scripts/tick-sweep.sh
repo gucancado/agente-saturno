@@ -113,6 +113,15 @@ for SLUG in $SLUGS; do
 
   log "auditando projeto $SLUG"
 
+  # Pré-computa o GID (identifier da inbox) e passa LITERAL pro agente, em vez de
+  # deixar o LLM derivar de whatsapp_group_jid. Haiku às vezes "narra" o GID certo
+  # mas chama inbox_list_unread com o identifier SEM hífen (JID legado
+  # <fone>-<ts>@g.us) → 0 msgs (sweep-1013 tagless: 0 avaliadas c/ 26 unread reais).
+  # `${JID%@*}` tira só o sufixo @… preservando o hífen. Vazio se projeto sem grupo.
+  GID_JID=$(jq -r --arg s "$SLUG" '.workspaces[]? | select(.slug==$s) | .whatsapp_group_jid // empty' \
+    "$WORKSPACE/_platform/workspace-map.json" 2>/dev/null)
+  if [[ -n "$GID_JID" && "$GID_JID" != "null" ]]; then GID="+${GID_JID%@*}"; else GID=""; fi
+
   if [[ "${SWEEP_DRY_RUN:-0}" == "1" ]]; then
     echo "[DRY_RUN] claude --print --model $MODEL --max-turns $MAX_TURNS (cwd=$CWD) SLUG=$SLUG"
     PROCESSED=$((PROCESSED+1))
@@ -127,7 +136,7 @@ for SLUG in $SLUGS; do
   run_claude() {
     cd "$CWD" || return 1
     claude "${CLAUDE_ARGS[@]}" \
-      <<<"TICK_ID=$TICK_ID SLUG=$SLUG R1_VERDICT_DM_TO=${R1_VERDICT_DM_TO:-}" \
+      <<<"TICK_ID=$TICK_ID SLUG=$SLUG GID=$GID R1_VERDICT_DM_TO=${R1_VERDICT_DM_TO:-}" \
       2>>"$LOG_DIR/claude.${TICK_ID}.log"
   }
 
