@@ -67,6 +67,7 @@ profiles:
       - Read
       - Write
       - Edit
+      - ToolSearch                          # OBRIGATÓRIO: as tools MCP são "deferred" (Claude Code recente as esconde atrás de ToolSearch); sem ToolSearch no allowlist o agente NÃO consegue carregá-las em --print não-interativo → "fontes não plugadas" (sweep-635/102/104, 2026-06-17). Funcionava antes do update do CC quando MCP era direta.
       - mcp__platform__inbox_list_unread
       - mcp__platform__inbox_mark_read
       - mcp__platform__resolve_whatsapp_identity

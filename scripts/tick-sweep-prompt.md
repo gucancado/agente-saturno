@@ -18,6 +18,16 @@ Uma linha: `TICK_ID=<id> SLUG=<slug> R1_VERDICT_DM_TO=<numero-ou-vazio>`.
 
 ## Sequência obrigatória
 
+0. **Carregar as tools MCP (deferred) via ToolSearch — PRIMEIRO PASSO, OBRIGATÓRIO.**
+   As tools `mcp__platform__*` e `mcp__bloquim__*` são **deferred**: não aparecem na lista de
+   funções no topo e PRECISAM ser carregadas antes de chamar. Logo no início, chame:
+   `ToolSearch({ query: "select:mcp__platform__inbox_list_unread,mcp__platform__resolve_whatsapp_identity,mcp__platform__send_whatsapp_dm,mcp__bloquim__search_tasks,mcp__bloquim__create_task,mcp__bloquim__list_workspace_members" })`
+   (adicione outras tools de que precisar pelo mesmo `select:`). Depois disso elas são chamáveis
+   normalmente. **As fontes ESTÃO conectadas** — se você "acha" que não consegue invocar uma MCP, é
+   porque ainda não a carregou via ToolSearch: carregue e chame. **NUNCA** escreva "fontes não
+   plugadas" / "MCPs não acessíveis" / "infraestrutura indisponível" — isso é bug de adesão, não
+   estado real. Se uma chamada MCP der erro real após carregada, reporte o erro literal.
+
 1. **Ler `PROJECT.md`** no cwd (briefing do projeto). Releia pra contexto recente.
 
 2. **Resolver o projeto no mapa.** Ler `_platform/workspace-map.json` e localizar o objeto com
