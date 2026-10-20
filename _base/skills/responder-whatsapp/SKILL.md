@@ -1,11 +1,13 @@
 ---
 name: responder-whatsapp
-description: Responde mensagem do WhatsApp em thread existente ou inicia nova. Sempre invoca aprovacao-humana primeiro para classificar L1/L2. Usa MCP whatsapp (aiteks-evolution) para envio efetivo.
+description: Responde mensagem do WhatsApp em thread existente ou inicia nova. Sempre invoca aprovacao-humana primeiro para classificar L1/L2. Envia SEMPRE pelo número B (Cloud API) via worker POST /send-cloud — nunca pela Evolution.
 ---
 
 # responder-whatsapp
 
-Skill para enviar mensagem WhatsApp via Evolution API.
+Skill para enviar mensagem WhatsApp pelo número B do saturno (WhatsApp Cloud API), via worker.
+
+**Regra:** envio do saturno é SEMPRE pelo número da API (Cloud), NUNCA pela Evolution. A Evolution é só leitura; o MCP Evolution nem é registrado no container (ver `_platform/mcp-bootstrap.sh`).
 
 ## Quando usar
 
@@ -33,8 +35,11 @@ Quando processar tarefa com tag `canal:whatsapp` e decidir responder.
    - Se retorna `pending`: parar; tarefa-filha de aprovação foi criada.
    - Se retorna `denied`: parar; replanejar (registrar em memória que ação foi negada).
 
-3. **Enviar via MCP**:
-   - `whatsapp:send_message(instance: <env EVOLUTION_INSTANCE>, to: <to>, message: <message>)`
+3. **Enviar pelo número B (Cloud API)**:
+   - `POST ${WORKER_URL}/send-cloud` com header `X-Agent-Token: ${WORKER_TOKEN}` e corpo
+     `{"phone_number_id": "${SATURNO_CLOUD_PHONE_NUMBER_ID}", "to": "<to sem o +>", "text": "<message>"}`.
+   - `200 {ok:true}` = enviado. `502` = a Meta recusou (ver `detail`); não reenviar em loop.
+   - Fora da janela de 24h desde a última mensagem do destinatário, a Meta só entrega TEMPLATE aprovado: texto livre falha. Nesse caso, registrar no Bloquim em vez de enviar.
 
 4. **Registrar em memória**:
    - `memoria/relacionamento/<identifier-sanitizado>.md` — atualiza nota do contato (data, conteúdo enviado, contexto).
