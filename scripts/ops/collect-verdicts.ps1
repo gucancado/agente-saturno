@@ -14,7 +14,7 @@
 param(
   [string]$Token = $env:COOLIFY_TOKEN,
   [string]$App   = "h5btft2bcfsz57mmmwf7do7q",
-  [string]$Base  = "http://5.78.199.192:8000/api/v1",
+  [string]$Base  = "https://coolify.beeads.com.br/api/v1",
   [int]$Lines    = 600
 )
 
